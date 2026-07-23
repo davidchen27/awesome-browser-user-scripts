@@ -41,6 +41,13 @@
 
 欢迎提交 Issue 和 Pull Request。如果有新脚本的想法，建议先开 Issue 讨论。
 
+## 免责声明
+
+- 本仓库所有脚本**仅供学习与技术交流使用**，请勿用于任何商业或非法用途。
+- 脚本与其所适配的网站无任何隶属、赞助或官方授权关系，相关站点名称与商标归各自权利人所有。
+- 如本仓库内容涉及侵权，请通过 [Issue](https://github.com/davidchen27/awesome-browser-user-scripts/issues) 联系作者，核实后将第一时间删除处理。
+- 使用脚本产生的一切后果由使用者自行承担，作者不承担任何责任。
+
 ## 许可证
 
 [MIT License](./LICENSE) © [davidchen27](https://github.com/davidchen27)

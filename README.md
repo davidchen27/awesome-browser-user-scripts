@@ -41,6 +41,13 @@ A curated collection of practical browser user scripts, designed to work with [p
 
 Issues and pull requests are welcome. If you have an idea for a new script, feel free to open an issue to discuss it first.
 
+## Disclaimer
+
+- All scripts in this repository are for **learning and technical research purposes only**. Do not use them for any commercial or unlawful purpose.
+- The scripts are not affiliated with, sponsored by, or officially endorsed by the websites they run on; all site names and trademarks belong to their respective owners.
+- If any content in this repository infringes your rights, please [open an issue](https://github.com/davidchen27/awesome-browser-user-scripts/issues) to contact the author, and it will be removed as soon as possible once verified.
+- Use the scripts at your own risk; the author assumes no liability for any consequences arising from their use.
+
 ## License
 
 [MIT License](./LICENSE) © [davidchen27](https://github.com/davidchen27)
