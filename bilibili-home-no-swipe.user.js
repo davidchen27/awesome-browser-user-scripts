@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name        移除Bilibili首页活动轮播板块
 // @match       https://www.bilibili.com/
+// @match       https://www.bilibili.com/?*
 // @run-at      document-start
 // ==/UserScript==
 
