@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/davidchen27/awesome-browser-user-scripts)](https://github.com/davidchen27/awesome-browser-user-scripts/commits)
 
-A curated collection of practical browser user scripts, designed to work with [oh-my-browser-script](https://github.com/davidchen27/oh-my-browser-script) — a Tampermonkey-style browser extension for managing and injecting user scripts.
+A curated collection of practical browser user scripts, designed to work with [page-tattoo](https://github.com/davidchen27/page-tattoo) — a Tampermonkey-style browser extension for managing and injecting user scripts.
 
 ## Scripts
 
@@ -32,7 +32,7 @@ A curated collection of practical browser user scripts, designed to work with [o
 
 ## Installation
 
-1. Install the [oh-my-browser-script](https://github.com/davidchen27/oh-my-browser-script) browser extension, and add the `.user.js` files from this repository to it (see the extension's documentation for how to add scripts).
+1. Install the [page-tattoo](https://github.com/davidchen27/page-tattoo) browser extension, and add the `.user.js` files from this repository to it (see the extension's documentation for how to add scripts).
 2. Visit a site matched by a script's `@match` rules — the script runs automatically.
 
 > These scripts follow the standard `.user.js` format, so they should also work with other user script managers such as Tampermonkey or Violentmonkey.

@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/davidchen27/awesome-browser-user-scripts)](https://github.com/davidchen27/awesome-browser-user-scripts/commits)
 
-一组实用的浏览器用户脚本合集，配合 [oh-my-browser-script](https://github.com/davidchen27/oh-my-browser-script) 使用 —— 这是一个类油猴（Tampermonkey）的用户脚本管理与注入浏览器扩展。
+一组实用的浏览器用户脚本合集，配合 [page-tattoo](https://github.com/davidchen27/page-tattoo) 使用 —— 这是一个类油猴（Tampermonkey）的用户脚本管理与注入浏览器扩展。
 
 ## 脚本列表
 
@@ -32,7 +32,7 @@
 
 ## 安装使用
 
-1. 安装 [oh-my-browser-script](https://github.com/davidchen27/oh-my-browser-script) 浏览器扩展，并将本仓库中的 `.user.js` 脚本添加到扩展中（具体添加方式见扩展的文档）。
+1. 安装 [page-tattoo](https://github.com/davidchen27/page-tattoo) 浏览器扩展，并将本仓库中的 `.user.js` 脚本添加到扩展中（具体添加方式见扩展的文档）。
 2. 访问脚本 `@match` 规则匹配的站点，脚本会自动运行。
 
 > 这些脚本遵循标准 `.user.js` 格式，因此理论上也可在 Tampermonkey、Violentmonkey 等其他用户脚本管理器中使用。
