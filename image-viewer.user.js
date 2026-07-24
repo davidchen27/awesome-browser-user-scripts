@@ -1,20 +1,29 @@
 // ==UserScript==
-// @name        GitHub README图片全屏预览
+// @name        图片预览功能扩展
 // @match       https://github.com/*
+// @match       https://www.v2ex.com/*
 // @run-at      document-idle
 // ==/UserScript==
 
+/**
+ * 站点匹配规则，按顺序匹配，首个命中即停止
+ * match：与 @match 相同的通配符语法，* 匹配任意字符串
+ * selectors：需接管图片点击的 CSS 选择器列表
+ * 新增站点时在数组头部追加即可
+ */
+const SITE_RULES = [
+  {
+    match: "https://github.com/*",
+    selectors: [".markdown-body img", ".Box-body img", ".repository-content img"],
+  },
+  {
+    match: "https://www.v2ex.com/*",
+    selectors: [".topic_content img", ".reply_content img"],
+  },
+];
+
 (() => {
   "use strict";
-
-  /**
-   * 页面中需要接管点击预览的图片选择器
-   */
-  const SELECTOR = [
-    ".markdown-body img",
-    ".Box-body img",
-    ".repository-content img",
-  ].join(",");
 
   /** 最小缩放倍率 */
   const MIN_SCALE = 0.2;
@@ -558,39 +567,42 @@
   }
 
   /**
-   * 接管页面图片点击：普通点击全屏预览，Ctrl/Cmd 点击在当前标签页打开原始链接
+   * 获取当前页面匹配的站点规则，按 SITE_RULES 顺序返回首个命中
+   * match 字段使用 @match 风格通配符（* 匹配任意字符串）
+   * @returns {{ match: string, selectors: string[] } | null}
+   */
+  function getCurrentRule() {
+    for (const rule of SITE_RULES) {
+      const escaped = rule.match.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+      const regexStr = escaped.replace(/\*/g, ".*");
+      if (new RegExp("^" + regexStr + "$").test(location.href)) {
+        return rule;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 接管页面图片点击：根据站点规则匹配目标图片，普通左键点击全屏预览
+   * 修饰键或非左键按下时不拦截，走浏览器默认行为
    * @param {MouseEvent} event 鼠标事件
    */
   function handleDocumentClick(event) {
-    const targetImage = event.target.closest(SELECTOR);
+    const rule = getCurrentRule();
+    if (!rule) return;
+
+    const selectorStr = rule.selectors.join(",");
+    const targetImage = event.target.closest(selectorStr);
     if (!targetImage) return;
 
-    // Ctrl/Cmd：保持当前标签页打开 GitHub 原始图片
-    if (event.ctrlKey || event.metaKey) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const link = targetImage.closest("a");
-      if (link?.href) {
-        window.location.href = link.href;
-      }
-
-      return;
-    }
-
-    // 保留浏览器默认行为
-    if (event.shiftKey || event.altKey || event.button !== 0) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) {
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
 
-    const imageSrc =
-      targetImage.getAttribute("data-canonical-src") ||
-      targetImage.currentSrc ||
-      targetImage.src ||
-      targetImage.getAttribute("src");
+    const imageSrc = targetImage.currentSrc || targetImage.src || targetImage.getAttribute("src");
 
     if (!imageSrc) return;
 
