@@ -47,11 +47,27 @@ const SITE_RULES = [
   const DRAG_THRESHOLD_PX = 3;
   /** 允许图片边缘拖出视口外的额外距离（px），避免拖拽正好卡在边缘的"没拖完"感 */
   const OVERDRAG_MARGIN_PX = 120;
+  /** 方向键对应的图片索引偏移量 */
+  const NAVIGATION_KEY_OFFSETS = {
+    ArrowLeft: -1,
+    ArrowUp: -1,
+    ArrowRight: 1,
+    ArrowDown: 1,
+  };
 
   /** 全屏预览遮罩层元素 */
   let viewerOverlay = null;
   /** 全屏预览图片元素 */
   let previewImage = null;
+  /** 上一张按钮元素 */
+  let previousButton = null;
+  /** 下一张按钮元素 */
+  let nextButton = null;
+
+  /** 当前预览包含的图片地址列表 */
+  let previewImageSources = [];
+  /** 当前预览图片在列表中的索引 */
+  let currentImageIndex = -1;
 
   /** 当前缩放倍率 */
   let currentScale = 1;
@@ -308,6 +324,30 @@ const SITE_RULES = [
   }
 
   /**
+   * 同步上一张与下一张按钮的禁用状态
+   */
+  function syncNavigationButtons() {
+    previousButton.disabled = currentImageIndex <= 0;
+    nextButton.disabled = currentImageIndex >= previewImageSources.length - 1;
+  }
+
+  /**
+   * 按索引偏移量切换预览图片，并复位缩放与平移状态
+   * @param {number} indexOffset 图片索引偏移量
+   */
+  function changePreviewImage(indexOffset) {
+    const targetIndex = currentImageIndex + indexOffset;
+    if (targetIndex < 0 || targetIndex >= previewImageSources.length) return;
+
+    resetTransform();
+
+    currentImageIndex = targetIndex;
+    previewImage.src = previewImageSources[currentImageIndex];
+
+    syncNavigationButtons();
+  }
+
+  /**
    * 处理遮罩层滚轮缩放：光标在图片上时以光标位置为锚点，否则以视口中心为锚点
    * @param {WheelEvent} event 滚轮事件
    */
@@ -470,11 +510,20 @@ const SITE_RULES = [
   }
 
   /**
-   * 处理键盘按键：Escape 关闭预览，0 补间复位到适配状态
+   * 处理键盘按键：方向键切换图片，Escape 关闭预览，0 补间复位到适配状态
    * @param {KeyboardEvent} event 键盘事件
    */
   function handleDocumentKeydown(event) {
     if (viewerOverlay.style.display === "none") return;
+
+    const navigationOffset = NAVIGATION_KEY_OFFSETS[event.key];
+    if (navigationOffset) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      changePreviewImage(navigationOffset);
+      return;
+    }
 
     if (event.key === "Escape") {
       hideViewer();
@@ -502,6 +551,99 @@ const SITE_RULES = [
   function createViewer() {
     if (viewerOverlay) return;
 
+    const viewerStyle = document.createElement("style");
+    viewerStyle.textContent = `
+      .image-viewer__navigation {
+        position: absolute;
+        top: 50%;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        box-sizing: border-box;
+        width: 44px;
+        height: 44px;
+        color: rgba(255,255,255,.88);
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 50%;
+        background: rgba(24,24,27,.48);
+        box-shadow: 0 8px 28px rgba(0,0,0,.28);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        opacity: .82;
+        transform: translateY(-50%);
+        transition:
+          color .18s ease,
+          border-color .18s ease,
+          background-color .18s ease,
+          box-shadow .18s ease,
+          opacity .18s ease,
+          transform .18s ease;
+      }
+
+      .image-viewer__navigation--previous {
+        left: clamp(12px, 2.5vw, 36px);
+      }
+
+      .image-viewer__navigation--next {
+        right: clamp(12px, 2.5vw, 36px);
+      }
+
+      .image-viewer__navigation svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
+      }
+
+      .image-viewer__navigation:hover:not(:disabled) {
+        color: #fff;
+        border-color: rgba(255,255,255,.3);
+        background: rgba(63,63,70,.72);
+        box-shadow: 0 10px 34px rgba(0,0,0,.36);
+        opacity: 1;
+        transform: translateY(-50%) scale(1.08);
+      }
+
+      .image-viewer__navigation:active:not(:disabled) {
+        background: rgba(82,82,91,.72);
+        transform: translateY(-50%) scale(.96);
+      }
+
+      .image-viewer__navigation:focus-visible {
+        outline: 2px solid rgba(255,255,255,.9);
+        outline-offset: 3px;
+      }
+
+      .image-viewer__navigation:disabled {
+        box-shadow: none;
+        cursor: default;
+        opacity: .18;
+      }
+
+      @media (max-width: 640px) {
+        .image-viewer__navigation {
+          width: 38px;
+          height: 38px;
+        }
+
+        .image-viewer__navigation--previous {
+          left: 10px;
+        }
+
+        .image-viewer__navigation--next {
+          right: 10px;
+        }
+      }
+    `;
+
     viewerOverlay = document.createElement("div");
     viewerOverlay.style.cssText = `
       position: fixed;
@@ -527,28 +669,80 @@ const SITE_RULES = [
       cursor: zoom-in;
     `;
 
+    previousButton = document.createElement("button");
+    previousButton.type = "button";
+    previousButton.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m15 18-6-6 6-6"></path>
+      </svg>
+    `;
+    previousButton.title = "上一张（← / ↑）";
+    previousButton.setAttribute("aria-label", "上一张");
+    previousButton.className = "image-viewer__navigation image-viewer__navigation--previous";
+
+    nextButton = document.createElement("button");
+    nextButton.type = "button";
+    nextButton.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m9 18 6-6-6-6"></path>
+      </svg>
+    `;
+    nextButton.title = "下一张（→ / ↓）";
+    nextButton.setAttribute("aria-label", "下一张");
+    nextButton.className = "image-viewer__navigation image-viewer__navigation--next";
+
     viewerOverlay.appendChild(previewImage);
+    viewerOverlay.appendChild(previousButton);
+    viewerOverlay.appendChild(nextButton);
+    document.head.appendChild(viewerStyle);
     document.body.appendChild(viewerOverlay);
 
     viewerOverlay.addEventListener("click", handleOverlayClick);
     viewerOverlay.addEventListener("wheel", handleOverlayWheel, { passive: false });
     previewImage.addEventListener("dblclick", handleImageDblclick);
     previewImage.addEventListener("mousedown", handleImageMousedown);
+    previousButton.addEventListener("click", () => changePreviewImage(-1));
+    nextButton.addEventListener("click", () => changePreviewImage(1));
     window.addEventListener("mousemove", handleWindowMousemove);
     window.addEventListener("mouseup", handleWindowMouseup);
     window.addEventListener("resize", handleWindowResize);
-    document.addEventListener("keydown", handleDocumentKeydown);
+    document.addEventListener("keydown", handleDocumentKeydown, true);
   }
 
   /**
-   * 打开全屏预览并加载指定图片
-   * @param {string} imageSrc 图片地址
+   * 获取图片元素当前可用于预览的地址
+   * @param {HTMLImageElement} imageElement 图片元素
+   * @returns {string} 图片地址，无有效地址时返回空字符串
    */
-  function showViewer(imageSrc) {
+  function getImageSource(imageElement) {
+    return imageElement.currentSrc || imageElement.src || imageElement.getAttribute("src") || "";
+  }
+
+  /**
+   * 打开全屏预览，按站点规则收集图片列表并定位到指定图片
+   * @param {HTMLImageElement} targetImage 被点击的图片元素
+   * @param {{ match: string, selectors: string[] }} rule 当前站点规则
+   */
+  function showViewer(targetImage, rule) {
     createViewer();
 
-    previewImage.src = imageSrc;
+    const selectorStr = rule.selectors.join(",");
+    const previewImages = Array.from(document.querySelectorAll(selectorStr)).filter((imageElement) =>
+      getImageSource(imageElement)
+    );
+    const targetImageIndex = previewImages.indexOf(targetImage);
+
+    previewImageSources = previewImages.map((imageElement) => getImageSource(imageElement));
+    currentImageIndex = targetImageIndex;
+
+    if (currentImageIndex < 0) {
+      previewImageSources = [getImageSource(targetImage)];
+      currentImageIndex = 0;
+    }
+
+    previewImage.src = previewImageSources[currentImageIndex];
     resetTransform();
+    syncNavigationButtons();
 
     viewerOverlay.style.display = "flex";
     document.body.style.overflow = "hidden";
@@ -564,6 +758,10 @@ const SITE_RULES = [
     document.body.style.overflow = "";
 
     resetTransform();
+
+    previewImageSources = [];
+    currentImageIndex = -1;
+    syncNavigationButtons();
   }
 
   /**
@@ -602,11 +800,11 @@ const SITE_RULES = [
     event.preventDefault();
     event.stopPropagation();
 
-    const imageSrc = targetImage.currentSrc || targetImage.src || targetImage.getAttribute("src");
+    const imageSrc = getImageSource(targetImage);
 
     if (!imageSrc) return;
 
-    showViewer(imageSrc);
+    showViewer(targetImage, rule);
   }
 
   document.addEventListener("click", handleDocumentClick, true);
